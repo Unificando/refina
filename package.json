@@ -1,9 +1,13 @@
 {
-  "name": "unificando-promptcraft",
-  "version": "0.1.0",
+  "name": "promptcraft-unificando",
+  "version": "0.2.0",
   "description": "Monta um prompt de engenharia de prompt a partir de texto cru e, opcionalmente, do contexto do projeto atual. Agnóstico de LLM e de stack — funciona via stdout/pipe com qualquer CLI de IA.",
   "bin": {
-    "unificando-promptcraft": "./bin/cli.js"
+    "promptcraft-unificando": "./bin/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renatojuniordw/promptcraft-unificando.git"
   },
   "files": [
     "bin",

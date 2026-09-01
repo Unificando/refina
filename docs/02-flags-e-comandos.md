@@ -1,9 +1,9 @@
-# unificando-promptcraft — Flags e Comandos
+# promptcraft-unificando — Flags e Comandos
 
 ## Sintaxe geral
 
 ```
-npx unificando-promptcraft [texto] [flags]
+npx promptcraft-unificando [texto] [flags]
 ```
 
 ## Tabela de flags
@@ -60,9 +60,9 @@ Muda completamente o modo de operação do CLI:
 
 Uso:
 ```bash
-npx unificando-promptcraft --save
+npx promptcraft-unificando --save
 # ou
-pbpaste | npx unificando-promptcraft --save   # macOS, lendo do clipboard
+pbpaste | npx promptcraft-unificando --save   # macOS, lendo do clipboard
 ```
 
 ### `--title`
@@ -71,7 +71,7 @@ Override manual do título, pra quando a heurística de "primeira linha" não
 produzir um nome de arquivo bom o suficiente.
 
 ```bash
-npx unificando-promptcraft --save --title "Prompt de resumo de reunião"
+npx promptcraft-unificando --save --title "Prompt de resumo de reunião"
 ```
 
 ## Configuração do prompt-base

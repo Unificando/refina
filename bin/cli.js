@@ -16,7 +16,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.help) {
-    console.log('Uso: unificando-promptcraft "texto" [--project] | --save [--title "..."]');
+    console.log('Uso: promptcraft-unificando "texto" [--project] | --save [--title "..."]');
     return;
   }
 

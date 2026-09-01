@@ -1,9 +1,9 @@
-# unificando-promptcraft — Estrutura Técnica
+# promptcraft-unificando — Estrutura Técnica
 
 ## Estrutura de pastas do repositório
 
 ```
-unificando-promptcraft/
+promptcraft-unificando/
 ├── bin/
 │   └── cli.js               # entrypoint executável (shebang #!/usr/bin/env node)
 ├── src/
@@ -153,7 +153,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.help) {
-    console.log('Uso: unificando-promptcraft "texto" [--project] | --save [--title "..."]');
+    console.log('Uso: promptcraft-unificando "texto" [--project] | --save [--title "..."]');
     return;
   }
 
@@ -182,10 +182,10 @@ main();
 
 ```json
 {
-  "name": "unificando-promptcraft",
+  "name": "promptcraft-unificando",
   "version": "0.1.0",
   "bin": {
-    "unificando-promptcraft": "./bin/cli.js"
+    "promptcraft-unificando": "./bin/cli.js"
   },
   "files": [
     "bin",

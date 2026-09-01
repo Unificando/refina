@@ -1,4 +1,4 @@
-# unificando-promptcraft
+# promptcraft-unificando
 
 CLI instalável via `npx` que monta um prompt de "Engenheiro de Prompt" concatenando um prompt-base fixo com o texto cru que o usuário digita. O resultado é impresso no stdout, pronto pra ser colado ou "pipado" em qualquer CLI de LLM.
 
@@ -7,7 +7,7 @@ CLI instalável via `npx` que monta um prompt de "Engenheiro de Prompt" concaten
 Não é necessário instalar — basta usar via `npx`:
 
 ```bash
-npx unificando-promptcraft "sua ideia de prompt"
+npx promptcraft-unificando "sua ideia de prompt"
 ```
 
 ## Uso
@@ -15,7 +15,7 @@ npx unificando-promptcraft "sua ideia de prompt"
 ### 1. Prompt solto, sem relação com projeto
 
 ```bash
-npx unificando-promptcraft "quero um prompt pra gerar resumo de reunião"
+npx promptcraft-unificando "quero um prompt pra gerar resumo de reunião"
 ```
 
 Imprime o template no stdout. Cola em qualquer lugar, ou usa pipe.
@@ -23,7 +23,7 @@ Imprime o template no stdout. Cola em qualquer lugar, ou usa pipe.
 ### 2. Prompt que precisa de contexto do projeto atual
 
 ```bash
-npx unificando-promptcraft --project "gera os testes unitários dessa função de pagamento"
+npx promptcraft-unificando --project "gera os testes unitários dessa função de pagamento"
 ```
 
 Adiciona instrução pro LLM de destino explorar a arquitetura do projeto atual antes de gerar o prompt.
@@ -31,7 +31,7 @@ Adiciona instrução pro LLM de destino explorar a arquitetura do projeto atual 
 ### 3. Salvando o resultado depois
 
 ```bash
-npx unificando-promptcraft --save
+npx promptcraft-unificando --save
 # cola o texto que o LLM de destino gerou, Ctrl+D pra confirmar
 ```
 
@@ -62,17 +62,17 @@ O pacote só imprime texto no stdout. Como esse texto chega até o LLM de destin
 
 **Claude Code:**
 ```bash
-npx unificando-promptcraft "ideia crua" | claude
+npx promptcraft-unificando "ideia crua" | claude
 ```
 
 **Gemini CLI:**
 ```bash
-npx unificando-promptcraft "ideia crua" | gemini
+npx promptcraft-unificando "ideia crua" | gemini
 ```
 
 **Fallback universal (qualquer CLI ou chat web):**
 ```bash
-npx unificando-promptcraft "ideia crua"
+npx promptcraft-unificando "ideia crua"
 ```
 
 ## Licença

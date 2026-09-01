@@ -1,4 +1,4 @@
-# unificando-promptcraft — Compatibilidade com CLIs de LLM
+# promptcraft-unificando — Compatibilidade com CLIs de LLM
 
 O pacote só imprime texto no stdout. Como esse texto chega até o LLM de
 destino depende de cada CLI aceitar ou não entrada via pipe/stdin. Esta
@@ -17,7 +17,7 @@ tabela documenta o que foi validado.
 
 ### Claude Code
 ```bash
-npx unificando-promptcraft "ideia crua" | claude
+npx promptcraft-unificando "ideia crua" | claude
 ```
 Abre uma sessão nova já processando o prompt. Se você quiser continuar
 iterando naquela mesma conversa depois, a sessão permanece ativa
@@ -25,11 +25,11 @@ normalmente.
 
 ### Gemini CLI
 ```bash
-npx unificando-promptcraft "ideia crua" | gemini
+npx promptcraft-unificando "ideia crua" | gemini
 ```
 ou, equivalente:
 ```bash
-gemini -p "$(npx unificando-promptcraft 'ideia crua')"
+gemini -p "$(npx promptcraft-unificando 'ideia crua')"
 ```
 Diferença importante em relação ao Claude Code: o processo do Gemini CLI
 **encerra depois de uma resposta**. Não há sessão contínua — se quiser
@@ -37,7 +37,7 @@ refinar mais, é preciso rodar de novo ou copiar a resposta pra outro lugar.
 
 ### Fallback universal (qualquer CLI ou chat web)
 ```bash
-npx unificando-promptcraft "ideia crua"
+npx promptcraft-unificando "ideia crua"
 ```
 Sem pipe nenhum — só imprime o template no terminal. Copia manualmente e
 cola onde quiser (chat web, outra CLI, editor).

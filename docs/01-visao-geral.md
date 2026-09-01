@@ -1,4 +1,4 @@
-# unificando-promptcraft — Visão Geral
+# promptcraft-unificando — Visão Geral
 
 ## O que é
 
@@ -34,7 +34,7 @@ mantendo o usuário no controle de qual LLM processa o resultado.
 ### 1. Prompt solto, sem relação com projeto
 
 ```bash
-npx unificando-promptcraft "quero um prompt pra gerar resumo de reunião"
+npx promptcraft-unificando "quero um prompt pra gerar resumo de reunião"
 ```
 Imprime o template no stdout. Cola em qualquer lugar, ou usa pipe (ver
 documento 03).
@@ -42,7 +42,7 @@ documento 03).
 ### 2. Prompt que precisa de contexto do projeto atual
 
 ```bash
-npx unificando-promptcraft --project "gera os testes unitários dessa função de pagamento"
+npx promptcraft-unificando --project "gera os testes unitários dessa função de pagamento"
 ```
 Adiciona instrução pro LLM de destino explorar a arquitetura do projeto
 atual antes de gerar o prompt (assume que o LLM de destino já tem acesso a
@@ -51,7 +51,7 @@ filesystem — ver documento 02, seção da flag `--project`).
 ### 3. Salvando o resultado depois
 
 ```bash
-npx unificando-promptcraft --save
+npx promptcraft-unificando --save
 # cola o texto que o LLM de destino gerou, Ctrl+D pra confirmar
 ```
 Persiste o resultado como `.md` no diretório atual. Sem chamada de API —
