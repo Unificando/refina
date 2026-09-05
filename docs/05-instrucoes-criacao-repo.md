@@ -1,5 +1,15 @@
 # Instruções para criação do repositório promptcraft-unificando
 
+> **ATENÇÃO (v1.0.0):** este documento descreve o scaffold das versões 0.x,
+> onde o CLI só imprimia o meta-prompt cru. Desde a v1.0.0 o repositório
+> mudou: existe `src/runPrompt.js`, o **comportamento padrão executa o
+> template num CLI de LLM local** (`claude`/`gemini`) e devolve o resultado
+> final, e a flag `--raw` preserva o meta-prompt bruto. Ao recriar o
+> repositório a partir deste checklist, trate os itens de código dos passos
+> 4, 5, 6, 8 e 9 como referência histórica e use o código atual do
+> repositório real — `src/args.js`, `src/runPrompt.js`, `src/saveMarkdown.js`,
+> `bin/cli.js`, `README.md` e os documentos 01-04 — como fonte da verdade.
+
 > Este documento é auto-suficiente: qualquer agente que o leia deve
 > conseguir criar o repositório completo sem consultar os outros
 > documentos. Os documentos 01-04 são a referência de design; este é a
