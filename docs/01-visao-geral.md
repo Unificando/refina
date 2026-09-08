@@ -83,6 +83,28 @@ npx promptcraft-unificando --save
 Persiste o resultado como `.md` no diretório atual. Sem chamada de API —
 título é gerado por heurística de texto (ver documento 02).
 
+### 6. Prompt longo com markdown/código (arquivo, pipe ou heredoc)
+
+Aspas no shell corrompem prompts com `$`, backticks e apóstrofos — aspas
+duplas interpolam/executam (command substitution) e aspas simples quebram
+em `someone's`. Para esses prompts, entregue o texto por uma fonte que o
+shell não interpreta:
+
+```bash
+npx promptcraft-unificando --file prompt.md            # de um arquivo
+cat prompt.md | npx promptcraft-unificando             # pipe (stdin não-TTY)
+npx promptcraft-unificando <<'EOF'                      # heredoc literal
+...seu prompt multilinha com ```code``` e $vars sem escape...
+EOF
+pbpaste | npx promptcraft-unificando                   # clipboard (macOS)
+```
+
+O texto vai íntegro (com quebras de linha e caracteres especiais) dentro
+da tag `<descricao>` do template. Texto posicional **ou** `--file` — nunca
+os dois. Sem texto nem `--file`, o stdin pipeado vira o prompt. O modo
+legado `--save` sem texto nem `--file` (cenário 5) tem prioridade sobre o
+pipe e continua salvando o conteúdo cru como `.md` (não refina).
+
 ## Documentos relacionados
 
 - `02-flags-e-comandos.md` — especificação completa de cada flag

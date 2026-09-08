@@ -4,17 +4,25 @@
 
 ```
 npx promptcraft-unificando [texto] [flags]
+npx promptcraft-unificando --file <arquivo> [flags]
+npx promptcraft-unificando [flags]  # texto lido do stdin quando pipeado (cat |, heredoc, pbpaste)
 ```
+
+O texto a ser melhorado pode vir de **uma** destas três fontes: argumento
+posicional (`[texto]`), conteúdo de um arquivo (`--file`) ou **stdin
+pipeado** (stdin não é um terminal). Detalhes e precedência na seção
+"Precedência da fonte do texto".
 
 ## Tabela de flags
 
 | Flag | Tipo | Obrigatória | Default | Descrição |
 |---|---|---|---|---|
-| `[texto]` (posicional) | string | Sim, exceto em `--save` sem texto | — | Texto cru do prompt a ser melhorado |
+| `[texto]` (posicional) | string | Não, se vier de `--file` ou do stdin pipeado | — | Texto cru do prompt a ser melhorado |
+| `--file <arquivo>` | string | Não, se o texto vier do posicional ou stdin | — | Lê o texto do prompt de um arquivo (UTF-8) |
 | `--project` | boolean | Não | `false` | Ativa o bloco `<arquitetura>` no template (ver seção abaixo) |
 | `--raw` | boolean | Não | `false` | Modo legado: imprime o meta-prompt bruto em vez de executar |
 | `--llm <cli>` | string | Não | `auto` | Força o CLI de execução: `claude`, `gemini`, `opencode` ou `auto` |
-| `--save` | boolean | Não | `false` | Grava `.md` — com texto: gera e salva; sem texto: lê stdin (legado) |
+| `--save` | boolean | Não | `false` | Grava `.md` — com texto/`--file`: gera e salva; sem texto nem `--file`: lê stdin (legado) |
 | `--title "texto"` | string | Não | heurística automática | Override do título usado no arquivo salvo (só com `--save`) |
 | `-h`, `--help` | boolean | Não | — | Mostra ajuda e sai |
 | `-v`, `--version` | boolean | Não | — | Mostra versão do pacote e sai |
@@ -34,6 +42,36 @@ npx promptcraft-unificando [texto] [flags]
   mutuamente exclusivos (o incidente do "arquivo vazio").*
 - **`--save` sem texto:** modo legado — lê todo o `stdin` até EOF e grava
   `.md`.
+
+## Precedência da fonte do texto
+
+Quando o texto pode vir de mais de um lugar, a ordem de decisão é:
+
+1. **Ambíguo:** `[texto]` **e** `--file` juntos → erro e exit 1 (as duas
+   fontes explícitas conflitam; o stdin não é lido).
+2. **`--file <arquivo>`:** o conteúdo do arquivo é o texto (erro claro e
+   exit 1 se o arquivo não puder ser lido). **`--file` desliga o modo
+   legado do `--save`:** com `--file`, `--save` sempre significa "gerar e
+   salvar o `.md`" (do resultado refinado ou do meta-prompt cru, com
+   `--raw`), nunca "ler stdin".
+3. **`[texto]` posicional:** se presente e sem `--file`, é o texto.
+4. **Stdin pipeado:** sem texto posicional e sem `--file`, **se o stdin não
+   é um terminal** (pipe: `cat arquivo.md |`, heredoc, `pbpaste |`), todo o
+   stdin até EOF é o texto.
+5. **Sem nenhuma das fontes** (ou fonte vazia) → erro e exit 1 com a
+   mensagem `forneça um texto, use --file ou pipeie o conteúdo via stdin`.
+
+**`--save` sem texto e sem `--file` nunca entra na regra 4** — é o modo
+legado (regra da seção anterior) e tem prioridade.
+
+> **Por que isso importa (shell quoting):** prompts longos com markdown,
+> code fences (backticks), `$`, aspas e quebras de linha **quebram ou são
+> corrompidos** quando passados entre aspas no shell — aspas duplas
+> interpolam `$var` e executam `` `comando` `` (command substitution); aspas
+> simples quebram no primeiro apóstrofo (`someone's`). Para esse tipo de
+> prompt, prefira `--file`, pipe ou heredoc — nenhum deles interpreta o
+> conteúdo (ver seção da flag `--file` e a documentação).
+
 - **`--project`:** só tem efeito na geração (com ou sem `--raw`); junto com
   `--save` sem texto, é ignorado.
 - **`--title`:** só tem efeito junto com `--save`. Sem `--save`, é ignorada.
@@ -42,6 +80,50 @@ npx promptcraft-unificando [texto] [flags]
   com dica de usar `--raw`.
 
 ## Detalhamento por flag
+
+### `--file <arquivo>`
+
+Lê o conteúdo do arquivo (UTF-8) como o texto do prompt — a forma mais
+robusta para prompts longos, multilinha, com markdown/code fences e
+caracteres especiais, porque **nenhum caractere é interpretado**: o shell
+não interpola `$`, não executa backticks e não quebra em apóstrofos.
+
+```bash
+npx promptcraft-unificando --file prompt.md            # refina e imprime
+npx promptcraft-unificando --file prompt.md --save      # refina e salva o .md
+npx promptcraft-unificando --file prompt.md --raw       # meta-prompt cru no stdout
+npx promptcraft-unificando --file prompt.md --project   # com exploração da arquitetura
+```
+
+Regras:
+
+- Combina com `--raw`, `--save`, `--project` e `--title` normalmente.
+  Com `--save`, gera-e-salva (nunca o modo legado de stdin).
+- Juntar com texto posicional é erro (exit 1).
+- Arquivo inexistente/inacessível → erro claro com o caminho e exit 1.
+- Arquivo vazio (só espaços) → mesmo erro de "nenhum texto".
+- Caminho começando com `-`: o parser trata como flag. Use `./` na frente
+  (`--file ./-prompt.md`).
+- BOM UTF-8 inicial (`.md` criado em alguns editores) é removido
+  automaticamente.
+
+**Alternativas equivalentes** (mesma garantia de "nenhum caractere
+interpretado"), quando o texto já está em outro lugar ou você prefere não
+criar arquivo:
+
+```bash
+cat prompt.md | npx promptcraft-unificando            # pipe
+pbpaste | npx promptcraft-unificando                  # clipboard (macOS)
+npx promptcraft-unificando <<'EOF'
+seu prompt multilinha
+com ```code``` e $vars sem escape
+EOF
+```
+
+**Atenção ao `--save` no pipe:** sem `--file` nem texto, `--save` com stdin
+pipeado **não refina** — é o modo legado, que salva o conteúdo do stdin
+como `.md` cru. Para refinar via pipe e salvar, use `--file` ou pipeie e
+deixe o `--save` de fora (o refinado sai no stdout).
 
 ### `--project`
 
@@ -82,23 +164,29 @@ validado em máquina real (ver documento 03).
 
 ### `--save`
 
-Dois comportamentos:
+Três comportamentos:
 
-1. **Com texto posicional:** executa (ou gera o meta-prompt, com `--raw`) e
-   grava o resultado direto num `.md` no cwd — sem pipe manual.
-2. **Sem texto:** modo legado — lê todo o `stdin` até EOF, extrai um título
-   (primeira linha não vazia, a não ser que `--title` tenha sido passado),
-   gera slug + timestamp (`YYYYMMDD-HHmm`) e escreve o `.md` no cwd.
+1. **Com texto posicional ou `--file`:** executa (ou gera o meta-prompt, com
+   `--raw`) e grava o resultado direto num `.md` no cwd — sem pipe manual.
+   A presença de `--file` desliga o modo legado (item 2) mesmo que não
+   haja texto posicional.
+2. **Sem texto e sem `--file`:** modo legado — lê todo o `stdin` até EOF,
+   extrai um título (primeira linha não vazia, a não ser que `--title`
+   tenha sido passado), gera slug + timestamp (`YYYYMMDD-HHmm`) e escreve o
+   `.md` no cwd.
+3. **Com `--raw`:** com texto/`--file`, o meta-prompt cru é o que vai pro
+   `.md` (combinam-se as regras 1 e 2 conforme a presença de texto).
 
 Se o conteúdo já abrir com H1 (caso do resultado final refinado), o título
 é extraído sem duplicar o `#` no arquivo.
 
 Uso:
 ```bash
-npx promptcraft-unificando "texto" --save       # gera e salva
-npx promptcraft-unificando --raw "texto" --save # meta-prompt cru em .md
-npx promptcraft-unificando --save               # lê stdin até EOF
-pbpaste | npx promptcraft-unificando --save     # macOS, lendo do clipboard
+npx promptcraft-unificando "texto" --save         # gera e salva
+npx promptcraft-unificando --file prompt.md --save # lê o arquivo, gera e salva
+npx promptcraft-unificando --raw "texto" --save   # meta-prompt cru em .md
+npx promptcraft-unificando --save                 # lê stdin até EOF (legado)
+pbpaste | npx promptcraft-unificando --save       # macOS — legado: salva o clipboard cru
 ```
 
 ### `--title`

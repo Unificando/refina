@@ -67,15 +67,50 @@ npx promptcraft-unificando --save
 
 Persiste o conteúdo como `.md` no diretório atual.
 
+### 6. Passando prompts longos com segurança
+
+O jeito `"texto entre aspas"` é frágil para prompts grandes com markdown,
+code fences e caracteres especiais. **Aspas duplas corrompem**: o shell
+interpola `$var` e executa `` `comandos` `` (command substitution). **Aspas
+simples quebram** no primeiro apóstrofo (`someone's`, `user's`). Para esses
+casos use uma fonte que o shell não interpreta:
+
+```bash
+# De um arquivo (recomendado para prompts longos)
+npx promptcraft-unificando --file prompt.md --project --save
+
+# Pipe de um arquivo (stdin não é um terminal → vira o texto)
+cat prompt.md | npx promptcraft-unificando
+
+# Heredoc (multilinha literal, sem escape de $ ou backticks)
+npx promptcraft-unificando --project <<'EOF'
+escreva um prompt para auditar meu repositório:
+1. varredura de secrets
+2. teste de autenticação
+```text
+blocos de código com backticks funcionam sem escape
+```
+EOF
+
+# Clipboard (macOS)
+pbpaste | npx promptcraft-unificando
+```
+
+Regras rápidas: texto posicional **ou** `--file`, não ambos; sem texto nem
+`--file`, o conteúdo do stdin pipeado vira o prompt; `--save` sem texto nem
+`--file` continua sendo o modo legado que salva o stdin como `.md` cru.
+BOM UTF-8 inicial é removido automaticamente.
+
 ## Flags
 
 | Flag | Tipo | Descrição |
 |---|---|---|
 | `[texto]` (posicional) | string | Texto cru do prompt a ser melhorado |
+| `--file <arquivo>` | string | Lê o texto do prompt de um arquivo (UTF-8; ideal para prompts longos/multilinha) |
 | `--project` | boolean | Ativa o bloco `<arquitetura>` no template (o LLM local explora o cwd) |
 | `--raw` | boolean | Modo legado: imprime o meta-prompt bruto em vez de executar |
 | `--llm <cli>` | string | Força o CLI: `claude`, `gemini` ou `auto` (default: claude → gemini) |
-| `--save` | boolean | Grava o resultado em `.md` (com texto: gera e salva; sem texto: lê stdin) |
+| `--save` | boolean | Grava o resultado em `.md` (com texto/`--file`: gera e salva; sem texto nem `--file`: lê stdin como legado) |
 | `--title "texto"` | string | Override do título usado no arquivo salvo (só com `--save`) |
 | `-h`, `--help` | boolean | Mostra ajuda e sai |
 | `-v`, `--version` | boolean | Mostra versão do pacote e sai |

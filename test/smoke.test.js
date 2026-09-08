@@ -156,13 +156,14 @@ test('runPrompt: timeout com filho imune a SIGTERM → SIGKILL e RUN_TIMEOUT (se
   assert.ok(Date.now() - start < 10000, `devia forçar SIGKILL (levou ${Date.now() - start}ms)`);
 });
 
-function makeDeps({ runPromptResult = { stdout: 'RESULTADO FINAL', stderr: '', exitCode: 0 }, readStdinValue = '' } = {}) {
+function makeDeps({ runPromptResult = { stdout: 'RESULTADO FINAL', stderr: '', exitCode: 0 }, readStdinValue = '', isStdinTTY = true } = {}) {
   const out = [];
   const err = [];
   const calls = { runPrompt: 0, templates: [] };
   const deps = {
     stdout: (s) => out.push(s),
     stderr: (s) => err.push(s),
+    isStdinTTY,
     readStdin: async () => readStdinValue,
     runPrompt: async (template, opts) => {
       calls.runPrompt += 1;
@@ -305,4 +306,157 @@ test('runPrompt: --llm opencode sem CLI no PATH → LLM_NOT_FOUND', () => {
     runPrompt('x', { llm: 'opencode', env }),
     (err) => err instanceof RunError && err.code === 'LLM_NOT_FOUND' && err.message.includes('opencode')
   );
+});
+
+// --- Delta: texto via stdin pipeado e via --file ---
+
+test('parseArgs: --file consome o próximo argumento', () => {
+  assert.equal(parseArgs(['--file', 'prompt.md']).file, 'prompt.md');
+  assert.equal(parseArgs(['--file', '--raw']).file, null);
+  assert.equal(parseArgs(['--file', '--raw']).raw, true);
+});
+
+test('parseArgs: posicionais e --file juntos (parser não rejeita; ambigüidade é do main)', () => {
+  const args = parseArgs(['texto', '--file', 'f.md']);
+  assert.equal(args.text, 'texto');
+  assert.equal(args.file, 'f.md');
+});
+
+test('main: texto + --file → erro ambíguo e exit 1', async () => {
+  const { deps, err, calls } = makeDeps();
+  const code = await main(['ola', '--file', 'f.md'], deps);
+  assert.equal(code, 1);
+  assert.ok(err.join('').includes('não ambos'));
+  assert.equal(calls.runPrompt, 0);
+});
+
+test('main: --file lê o arquivo e executa o runPrompt', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pcu-'));
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    const content = 'linha 1\n$VAR e `code`\n```text\nfence\n```\n';
+    fs.writeFileSync('prompt.md', content);
+    const { deps, out, calls } = makeDeps();
+    const code = await main(['--file', 'prompt.md'], deps);
+    assert.equal(code, 0);
+    assert.equal(calls.runPrompt, 1);
+    assert.ok(calls.templates[0].includes(`<descricao>\n${content}\n</descricao>`));
+    assert.equal(out.join(''), 'RESULTADO FINAL');
+  } finally {
+    process.chdir(cwd);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('main: --file --raw imprime o meta-prompt cru com o conteúdo do arquivo', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pcu-'));
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    fs.writeFileSync('prompt.md', 'texto do arquivo');
+    const { deps, out, calls } = makeDeps();
+    const code = await main(['--file', 'prompt.md', '--raw'], deps);
+    assert.equal(code, 0);
+    assert.equal(calls.runPrompt, 0);
+    const joined = out.join('');
+    assert.ok(joined.includes('<descricao>\ntexto do arquivo\n</descricao>'));
+    assert.ok(!joined.includes('<modo_direto>'));
+  } finally {
+    process.chdir(cwd);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('main: --file --save gera e salva o .md (não é modo legado)', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pcu-'));
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    fs.writeFileSync('prompt.md', 'texto do arquivo');
+    const { deps, out, calls } = makeDeps({ runPromptResult: { stdout: '# Titulo Final\n\ncorpo', stderr: '', exitCode: 0 } });
+    const code = await main(['--file', 'prompt.md', '--save'], deps);
+    assert.equal(code, 0);
+    assert.equal(calls.runPrompt, 1, '--file suprime o modo legado de stdin');
+    assert.ok(out.join('').includes('Salvo em:'));
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.md') && f !== 'prompt.md');
+    assert.equal(files.length, 1);
+    const content = fs.readFileSync(path.join(dir, files[0]), 'utf-8');
+    assert.equal(content, '# Titulo Final\n\ncorpo');
+  } finally {
+    process.chdir(cwd);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('main: --file inexistente → erro claro e exit 1', async () => {
+  const { deps, err, calls } = makeDeps();
+  const code = await main(['--file', 'nao-existe.md'], deps);
+  assert.equal(code, 1);
+  assert.ok(err.join('').includes('nao-existe.md'));
+  assert.ok(err.join('').includes('não foi possível ler'));
+  assert.equal(calls.runPrompt, 0);
+});
+
+test('main: --file com arquivo vazio → erro de texto vazio', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pcu-'));
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    fs.writeFileSync('vazio.md', '');
+    const { deps, err, calls } = makeDeps();
+    const code = await main(['--file', 'vazio.md'], deps);
+    assert.equal(code, 1);
+    assert.ok(err.join('').includes('forneça um texto'));
+    assert.equal(calls.runPrompt, 0);
+  } finally {
+    process.chdir(cwd);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('main: sem texto, stdin pipeado → lê stdin como texto e executa', async () => {
+  const pipeText = 'texto via pipe\ncom $var e `code`\n```\nfence\n```';
+  const { deps, calls } = makeDeps({ isStdinTTY: false, readStdinValue: pipeText });
+  const code = await main([], deps);
+  assert.equal(code, 0);
+  assert.equal(calls.runPrompt, 1);
+  assert.ok(calls.templates[0].includes(`<descricao>\n${pipeText}\n</descricao>`));
+});
+
+test('main: stdin pipeado vazio → erro e exit 1', async () => {
+  const { deps, err, calls } = makeDeps({ isStdinTTY: false, readStdinValue: '' });
+  const code = await main([], deps);
+  assert.equal(code, 1);
+  assert.ok(err.join('').includes('forneça um texto'));
+  assert.equal(calls.runPrompt, 0);
+});
+
+test('main: --save + stdin pipeado continua legado (salva .md cru)', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pcu-'));
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    const { deps, out, calls } = makeDeps({ isStdinTTY: false, readStdinValue: 'conteudo cru do stdin' });
+    const code = await main(['--save'], deps);
+    assert.equal(code, 0);
+    assert.equal(calls.runPrompt, 0);
+    assert.ok(out.join('').includes('Salvo em:'));
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.md'));
+    assert.equal(files.length, 1);
+    const content = fs.readFileSync(path.join(dir, files[0]), 'utf-8');
+    assert.ok(content.startsWith('# conteudo cru do stdin'));
+  } finally {
+    process.chdir(cwd);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('main: posicional tem precedência sobre stdin pipeado', async () => {
+  const { deps, calls } = makeDeps({ isStdinTTY: false, readStdinValue: 'via stdin' });
+  const code = await main(['posicional'], deps);
+  assert.equal(code, 0);
+  assert.equal(calls.runPrompt, 1);
+  assert.ok(calls.templates[0].includes('<descricao>\nposicional\n</descricao>'));
+  assert.ok(!calls.templates[0].includes('via stdin'));
 });

@@ -8,6 +8,7 @@ function parseArgs(argv) {
     version: false,
     raw: false,
     llm: null,
+    file: null,
   };
   const positional = [];
 
@@ -19,6 +20,11 @@ function parseArgs(argv) {
     else if (arg === '--llm') {
       const maybeValue = argv[i + 1];
       if (maybeValue && !maybeValue.startsWith('-')) { result.llm = maybeValue; i++; }
+    }
+    else if (arg === '--file') {
+      // Caminhos que começam com '-' precisam de './' (ex: ./-prompt.md).
+      const maybeValue = argv[i + 1];
+      if (maybeValue && !maybeValue.startsWith('-')) { result.file = maybeValue; i++; }
     }
     else if (arg === '--title') { result.title = argv[i + 1] || null; i++; }
     else if (arg === '-h' || arg === '--help') result.help = true;

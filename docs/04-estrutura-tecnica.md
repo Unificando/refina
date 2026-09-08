@@ -24,7 +24,8 @@ promptcraft-unificando/
 
 **Zero dependências de terceiros, por decisão deliberada.** Parsing de
 flags feito à mão — são poucas (`--save`, `--project`, `--raw`, `--llm`,
-`--title`, `-h`, `-v`). A execução usa `child_process` nativo do Node.
+`--title`, `--file`, `-h`, `-v`). A execução usa `child_process` nativo do
+Node.
 Menos dependências = qualquer pessoa consegue auditar o pacote inteiro em
 poucos minutos e confirmar que não há chamada de rede escondida em
 sub-dependency: **o pacote em si nunca faz requisição de rede** — no modo
@@ -389,10 +390,23 @@ module.exports = { saveMarkdown };
 ## `bin/cli.js`
 
 Faz o parse de `process.argv` e decide o modo por combinação de flags
-(texto / `--raw` / `--save` / `--project` / `--llm`). O `main` é exportado
-com dependências injetáveis (stdout, stderr, readStdin, runPrompt) para os
-testes; o auto-run só acontece quando o arquivo é o entrypoint
-(`require.main === module`). Exibe a versão em `-v`/`--version`.
+(texto / `--file` / `--raw` / `--save` / `--project` / `--llm`). O `main` é
+exportado com dependências injetáveis (stdout, stderr, readStdin,
+runPrompt, isStdinTTY) para os testes; o auto-run só acontece quando o
+arquivo é o entrypoint (`require.main === module`). Exibe a versão em
+`-v`/`--version`.
+
+**Fontes do texto (v1.1.0):** o texto a ser melhorado pode vir do argumento
+posicional, do arquivo indicado por `--file` (lido com `fs.readFileSync`,
+erro claro se inacessível) ou do **stdin pipeado** — quando não há texto
+nem `--file`, `--save` está ausente e `stdin` não é um TTY
+(`process.stdin.isTTY` falso; `deps.isStdinTTY` injetável nos testes),
+lê-se todo o stdin até EOF como o texto. Texto posicional **e** `--file`
+juntos são erro (exit 1). `--save` sem texto nem `--file` tem prioridade
+sobre o stdin pipeado (modo legado, ver abaixo). Um BOM UTF-8 inicial
+(`\uFEFF`, comum em `pbpaste`/editores) é removido antes de montar o
+template. A resolução acontece antes do `buildTemplate` — que então recebe
+o texto já resolvido.
 
 ```js
 #!/usr/bin/env node
@@ -522,9 +536,11 @@ exatamente o que está sendo distribuído.
 
 ```
 argv → parseArgs
-  ├─ --help / --version → saída e exit 0
-  ├─ --save sem texto   → readStdin → saveMarkdown (legado)
-  ├─ sem texto          → erro, exit 1
-  ├─ --raw              → buildTemplate(direct=false) → stdout/saveMarkdown (meta-prompt cru)
-  └─ padrão             → buildTemplate(direct=true) → runPrompt(claude/gemini/opencode) → stdout/saveMarkdown
+  ├─ --help / --version        → saída e exit 0
+  ├─ --save sem texto e sem --file → readStdin → saveMarkdown (legado, prioridade sobre pipe)
+  ├─ texto + --file            → erro "use o texto posicional OU --file", exit 1
+  ├─ resolução do texto: --file > posicional > stdin pipeado (!isTTY e sem --save)
+  │     └─ nenhuma fonte / vazia → erro, exit 1
+  ├─ --raw                     → buildTemplate(direct=false) → stdout/saveMarkdown (meta-prompt cru)
+  └─ padrão                    → buildTemplate(direct=true) → runPrompt(claude/gemini/opencode) → stdout/saveMarkdown
 ```
