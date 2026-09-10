@@ -214,9 +214,14 @@ function runPrompt(
     timeoutMs,
     env = process.env,
     isWin32 = process.platform === 'win32',
+    project = false,
+    onProgress = null,
   } = {}
 ) {
-  const limit = timeoutMs || Number(env.PROMPTCRAFT_TIMEOUT_MS) || 120000;
+  // Default do timeout depende do modo: `--project` faz o LLM varrer o repo
+  // antes de gerar, então ganha folga maior. env e timeoutMs explícito vencem.
+  const fallback = project ? DEFAULT_TIMEOUT_PROJECT_MS : DEFAULT_TIMEOUT_MS; // 900000 : 600000
+  const limit = timeoutMs || Number(env.PROMPTCRAFT_TIMEOUT_MS) || fallback;
 
   return new Promise((resolve, reject) => {
     let cmd;
@@ -296,7 +301,9 @@ function runPrompt(
         if (timedOut) {
           settle(() => reject(
             new RunError(
-              `Tempo limite excedido (${limit}ms) executando ${cmd}. Ajuste com PROMPTCRAFT_TIMEOUT_MS.`,
+              `Tempo limite excedido (${Math.round(limit / 1000)}s) executando ${cmd}. ` +
+                `Aumente com PROMPTCRAFT_TIMEOUT_MS (ex.: PROMPTCRAFT_TIMEOUT_MS=1200000) ` +
+                `ou use --raw para obter o meta-prompt sem executar.`,
               { code: 'RUN_TIMEOUT', stdout, stderr, exitCode, command: cmd, args }
             )
           ))();
@@ -327,7 +334,10 @@ function runPrompt(
   });
 }
 
-module.exports = { detectLlm, runPrompt, buildArgs, RunError, LLM_DEFS, LLM_NAMES };
+module.exports = {
+  detectLlm, runPrompt, buildArgs, RunError, LLM_DEFS, LLM_NAMES,
+  DEFAULT_TIMEOUT_MS, DEFAULT_TIMEOUT_PROJECT_MS,
+};
 ```
 
 Decisões de segurança: args do spawn são **fixos** (vêm de `LLM_DEFS`, sem
@@ -342,6 +352,14 @@ indefinido e deixar a promise pendente (ou resolver como sucesso quando o
 processo saísse com 0 depois do timeout). Com `exit` + `timedOut`, a promise
 **sempre settle** com `RUN_TIMEOUT`, e os streams são destruídos no settle
 para não segurar o event loop.
+
+Decisão de UX (progresso): a execução do CLI local leva minutos e antes não
+emitia nenhum sinal — parecia travada. `runPrompt` aceita um callback opcional
+`onProgress` que recebe `{ phase: 'start' | 'tick' | 'end', llm, project,
+elapsedMs, timedOut }`; o `tick` sai a cada 15s de um `setInterval` com
+`.unref()` (nunca segura o event loop) limpo no `cleanup()`. O `bin/cli.js`
+monta um `reporter` que escreve essas linhas **sempre no stderr** — o stdout
+segue sendo só o prompt final, então pipe e `--save` não mudam.
 
 ## `src/saveMarkdown.js`
 

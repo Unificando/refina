@@ -460,3 +460,89 @@ test('main: posicional tem precedência sobre stdin pipeado', async () => {
   assert.ok(calls.templates[0].includes('<descricao>\nposicional\n</descricao>'));
   assert.ok(!calls.templates[0].includes('via stdin'));
 });
+
+// --- Delta: timeout default por modo + progresso no stderr ---
+
+test('runPrompt: PROMPTCRAFT_TIMEOUT_MS do env ainda vence o default novo', async () => {
+  const env = { ...process.env, PROMPTCRAFT_TIMEOUT_MS: '300' };
+  const start = Date.now();
+  await assert.rejects(
+    runPrompt('x', { commandOverride: ['node', '-e', 'setTimeout(() => {}, 10000)'], env }),
+    (err) => err instanceof RunError && err.code === 'RUN_TIMEOUT'
+  );
+  assert.ok(Date.now() - start < 5000, `env timeout curto deve valer (levou ${Date.now() - start}ms)`);
+});
+
+test('runPrompt: mensagem de RUN_TIMEOUT cita segundos, PROMPTCRAFT_TIMEOUT_MS e --raw', async () => {
+  await assert.rejects(
+    runPrompt('x', { commandOverride: ['node', '-e', 'setTimeout(() => {}, 10000)'], timeoutMs: 300 }),
+    (err) => {
+      assert.ok(err.message.includes('PROMPTCRAFT_TIMEOUT_MS'));
+      assert.ok(err.message.includes('--raw'));
+      assert.ok(/\(\d+s\)/.test(err.message), `devia citar segundos: ${err.message}`);
+      return true;
+    }
+  );
+});
+
+test('runPrompt: onProgress recebe start e depois end (sucesso rápido, sem timeout)', async () => {
+  const events = [];
+  const res = await runPrompt('oi', {
+    commandOverride: ['node', '-e', 'process.stdin.pipe(process.stdout)'],
+    onProgress: (evt) => events.push(evt),
+  });
+  assert.equal(res.exitCode, 0);
+  assert.deepEqual(events.map((e) => e.phase), ['start', 'end']);
+  assert.equal(events[1].timedOut, false);
+});
+
+test('runPrompt: project:true resolve normalmente com comando rápido', async () => {
+  const res = await runPrompt('oi', {
+    commandOverride: ['node', '-e', 'process.stdin.pipe(process.stdout)'],
+    project: true,
+  });
+  assert.equal(res.stdout, 'oi');
+  assert.equal(res.exitCode, 0);
+});
+
+test('main: --project repassa project:true e onProgress ao runPrompt', async () => {
+  const { deps, calls } = makeDeps();
+  const code = await main(['texto', '--project'], deps);
+  assert.equal(code, 0);
+  assert.equal(calls.opts.project, true);
+  assert.equal(typeof calls.opts.onProgress, 'function');
+});
+
+test('main: progresso do reporter vai só para stderr; stdout continua só o resultado', async () => {
+  const { deps, out, err, calls } = makeDeps();
+  deps.runPrompt = async (template, opts) => {
+    calls.runPrompt += 1;
+    opts.onProgress({ phase: 'start', llm: 'claude', project: true });
+    opts.onProgress({ phase: 'tick', elapsedMs: 15000 });
+    opts.onProgress({ phase: 'end', elapsedMs: 42000, timedOut: false });
+    return { stdout: 'RESULTADO FINAL', stderr: '', exitCode: 0 };
+  };
+  const code = await main(['texto', '--project'], deps);
+  assert.equal(code, 0);
+  assert.equal(out.join(''), 'RESULTADO FINAL');
+  const e = err.join('');
+  assert.ok(e.includes('Refinando via "claude"'));
+  assert.ok(e.includes('--project explora o repositório'));
+  assert.ok(e.includes('ainda processando (15s)'));
+  assert.ok(e.includes('prompt gerado em 42s'));
+});
+
+test('main: reporter em timeout não imprime linha de sucesso', async () => {
+  const { deps, err, calls } = makeDeps();
+  deps.runPrompt = async (template, opts) => {
+    calls.runPrompt += 1;
+    opts.onProgress({ phase: 'start', llm: 'claude', project: false });
+    opts.onProgress({ phase: 'end', elapsedMs: 900000, timedOut: true });
+    throw new RunError('Tempo limite excedido (900s) executando claude. ... --raw ...', { code: 'RUN_TIMEOUT' });
+  };
+  const code = await main(['texto'], deps);
+  assert.equal(code, 1);
+  const e = err.join('');
+  assert.ok(!e.includes('prompt gerado em'));
+  assert.ok(e.includes('Tempo limite excedido'));
+});

@@ -27,6 +27,7 @@ async function main(argv, deps = {}) {
   const stderr = deps.stderr || ((s) => process.stderr.write(s));
   const doReadStdin = deps.readStdin || readStdin;
   const doRunPrompt = deps.runPrompt || runPrompt;
+  const isStderrTTY = deps.isStderrTTY !== undefined ? deps.isStderrTTY : process.stderr.isTTY;
   // stdin é pipe quando NÃO é um TTY (ex: `cat x.md | npx ...`, heredoc).
   const stdinIsTTY = deps.isStdinTTY !== undefined ? deps.isStdinTTY : process.stdin.isTTY;
 
@@ -95,10 +96,31 @@ async function main(argv, deps = {}) {
   }
 
   // Modo padrão (v1.0.0): delega o template a um CLI de LLM local (claude/gemini)
-  // e devolve o prompt final já refinado.
+  // e devolve o prompt final já refinado. O progresso vai SEMPRE para o stderr —
+  // o stdout continua sendo só o prompt final (pipe/--save intactos).
+  let ticked = false;
+  const reporter = (evt) => {
+    const s = evt.elapsedMs ? Math.round(evt.elapsedMs / 1000) : 0;
+    if (evt.phase === 'start') {
+      const extra = evt.project ? ' (--project explora o repositório)' : '';
+      stderr(`▸ Refinando via "${evt.llm}" — pode levar alguns minutos${extra}.\n`);
+    } else if (evt.phase === 'tick') {
+      ticked = true;
+      if (isStderrTTY) stderr(`\r  ⏳ processando (${s}s)…`);
+      else stderr(`  … ainda processando (${s}s)\n`);
+    } else if (evt.phase === 'end') {
+      if (isStderrTTY && ticked) stderr('\r\x1b[K');
+      if (!evt.timedOut) stderr(`✓ prompt gerado em ${s}s\n`);
+    }
+  };
+
   let result;
   try {
-    result = await doRunPrompt(template, { llm: args.llm || process.env.PROMPTCRAFT_LLM || 'auto' });
+    result = await doRunPrompt(template, {
+      llm: args.llm || process.env.PROMPTCRAFT_LLM || 'auto',
+      project: args.project,
+      onProgress: reporter,
+    });
   } catch (err) {
     stderr(`${err.message}\n`);
     return 1;

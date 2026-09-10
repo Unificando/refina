@@ -203,7 +203,7 @@ npx promptcraft-unificando "texto" --save --title "Prompt de resumo de reunião"
 | Variável | Default | Descrição |
 |---|---|---|
 | `PROMPTCRAFT_LLM` | `auto` | Mesmo efeito do `--llm`; a flag tem precedência |
-| `PROMPTCRAFT_TIMEOUT_MS` | `120000` | Timeout (ms) da execução do CLI local; erro `RUN_TIMEOUT` se estourar |
+| `PROMPTCRAFT_TIMEOUT_MS` | `600000` (`900000` com `--project`) | Timeout (ms) da execução do CLI local; sobrepõe o default do modo; erro `RUN_TIMEOUT` se estourar |
 
 ## Configuração do prompt-base
 

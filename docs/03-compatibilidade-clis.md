@@ -27,7 +27,7 @@ Premissas:
   pedir login, o processo falha com stderr claro, repassado pelo pacote.
 - Detecção: `claude` primeiro, senão `gemini`, senão `opencode` — ou
   forçar com `--llm`/`PROMPTCRAFT_LLM`.
-- Timeout padrão de 120s, ajustável via `PROMPTCRAFT_TIMEOUT_MS`.
+- Timeout padrão de 600s (900s com `--project`), ajustável via `PROMPTCRAFT_TIMEOUT_MS`.
 - **Modo direto:** no modo padrão o template inclui o sufixo `<modo_direto>`,
   que instrui a IA a entregar somente o prompt final (sem a pergunta
   "posso executar?" que o prompt-base pede por padrão). Se alguma CLI

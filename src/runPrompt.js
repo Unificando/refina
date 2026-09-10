@@ -23,6 +23,16 @@ const LLM_DEFS = {
 
 const LLM_NAMES = Object.keys(LLM_DEFS);
 
+// Timeout padrão do spawn do LLM. O modo normal já é uma execução completa de
+// agente (1–3 min); `--project` ainda manda o LLM varrer o repositório antes de
+// gerar, então ganha uma folga maior. `PROMPTCRAFT_TIMEOUT_MS` e `timeoutMs`
+// explícito continuam vencendo estes defaults.
+const DEFAULT_TIMEOUT_MS = 600000; // 10 min
+const DEFAULT_TIMEOUT_PROJECT_MS = 900000; // 15 min (--project)
+
+// Intervalo entre os "ticks" de progresso reportados via onProgress.
+const PROGRESS_TICK_MS = 15000;
+
 class RunError extends Error {
   constructor(message, { code = null, stdout = '', stderr = '', exitCode = null, command = null, args = [] } = {}) {
     super(message);
@@ -88,9 +98,13 @@ function runPrompt(
     timeoutMs,
     env = process.env,
     isWin32 = process.platform === 'win32',
+    project = false,
+    onProgress = null,
   } = {}
 ) {
-  const limit = timeoutMs || Number(env.PROMPTCRAFT_TIMEOUT_MS) || 120000;
+  const fallback = project ? DEFAULT_TIMEOUT_PROJECT_MS : DEFAULT_TIMEOUT_MS;
+  const limit = timeoutMs || Number(env.PROMPTCRAFT_TIMEOUT_MS) || fallback;
+  const report = typeof onProgress === 'function' ? onProgress : () => {};
 
   return new Promise((resolve, reject) => {
     let cmd;
@@ -111,6 +125,9 @@ function runPrompt(
       args = buildArgs(definition);
     }
 
+    const startedAt = Date.now();
+    report({ phase: 'start', llm: cmd, project });
+
     const child = spawn(cmd, args, {
       cwd,
       env,
@@ -125,8 +142,16 @@ function runPrompt(
     let killTimer = null;
     let drainTimer = null;
 
+    // Heartbeat: enquanto o LLM trabalha, avisa que o processo está vivo. O
+    // timer é .unref() para nunca segurar o event loop sozinho.
+    const progressTimer = setInterval(() => {
+      report({ phase: 'tick', elapsedMs: Date.now() - startedAt });
+    }, PROGRESS_TICK_MS);
+    if (typeof progressTimer.unref === 'function') progressTimer.unref();
+
     const cleanup = () => {
       clearTimeout(timeoutTimer);
+      clearInterval(progressTimer);
       if (killTimer) clearTimeout(killTimer);
       if (drainTimer) clearTimeout(drainTimer);
       // Fecha o lado do Node dos pipes: um órfão segurando o outro lado
@@ -139,6 +164,7 @@ function runPrompt(
       if (settled) return;
       settled = true;
       cleanup();
+      report({ phase: 'end', elapsedMs: Date.now() - startedAt, timedOut });
       fn(value);
     };
 
@@ -170,7 +196,9 @@ function runPrompt(
         if (timedOut) {
           settle(() => reject(
             new RunError(
-              `Tempo limite excedido (${limit}ms) executando ${cmd}. Ajuste com PROMPTCRAFT_TIMEOUT_MS.`,
+              `Tempo limite excedido (${Math.round(limit / 1000)}s) executando ${cmd}. ` +
+                `Aumente com PROMPTCRAFT_TIMEOUT_MS (ex.: PROMPTCRAFT_TIMEOUT_MS=1200000) ` +
+                `ou use --raw para obter o meta-prompt sem executar.`,
               { code: 'RUN_TIMEOUT', stdout, stderr, exitCode, command: cmd, args }
             )
           ))();
@@ -201,4 +229,13 @@ function runPrompt(
   });
 }
 
-module.exports = { detectLlm, runPrompt, buildArgs, RunError, LLM_DEFS, LLM_NAMES };
+module.exports = {
+  detectLlm,
+  runPrompt,
+  buildArgs,
+  RunError,
+  LLM_DEFS,
+  LLM_NAMES,
+  DEFAULT_TIMEOUT_MS,
+  DEFAULT_TIMEOUT_PROJECT_MS,
+};

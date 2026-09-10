@@ -120,7 +120,9 @@ BOM UTF-8 inicial é removido automaticamente.
 | Variável | Default | Descrição |
 |---|---|---|
 | `PROMPTCRAFT_LLM` | `auto` | Força o CLI (mesmo efeito do `--llm`; a flag tem precedência) |
-| `PROMPTCRAFT_TIMEOUT_MS` | `120000` | Timeout (ms) da execução do CLI local |
+| `PROMPTCRAFT_TIMEOUT_MS` | `600000` (`900000` com `--project`) | Timeout (ms) da execução do CLI local; sobrepõe o default do modo. Aumente para prompts longos ou repositórios grandes. |
+
+Durante a execução, o progresso é reportado no **stderr** (`▸ Refinando via "claude"…`, ticks a cada 15s, `✓ prompt gerado em Ns`). O stdout continua sendo apenas o prompt final refinado, então pipe e `--save` seguem intactos.
 
 ## Compatibilidade com CLIs de LLM
 
