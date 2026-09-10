@@ -1,25 +1,30 @@
 {
-  "name": "promptcraft-unificando",
+  "name": "@unificando/refina",
   "version": "1.2.0",
   "description": "Refina prompts em 1 passo: monta o prompt de engenharia a partir de texto cru e delega a execução a um CLI de LLM local (claude/gemini), com opção --raw para o meta-prompt bruto agnóstico de LLM.",
   "bin": {
-    "promptcraft-unificando": "bin/cli.js"
+    "unificando-refina": "bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "test": "node --test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/renatojuniordw/promptcraft-unificando.git"
+    "url": "git+https://github.com/Unificando/refina.git"
   },
   "files": [
     "bin",
     "src",
-    "prompts"
+    "prompts",
+    "README.md"
   ],
   "engines": {
     "node": ">=18"
   },
+  "author": "Renato Bezerra",
   "license": "MIT",
   "keywords": [
     "prompt-engineering",

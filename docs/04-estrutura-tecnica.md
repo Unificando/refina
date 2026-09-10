@@ -1,9 +1,9 @@
-# promptcraft-unificando — Estrutura Técnica
+# @unificando/refina — Estrutura Técnica
 
 ## Estrutura de pastas do repositório
 
 ```
-promptcraft-unificando/
+refina/
 ├── bin/
 │   └── cli.js               # entrypoint executável (shebang #!/usr/bin/env node) + orquestração
 ├── src/
@@ -453,7 +453,7 @@ async function main(argv, deps = {}) {
   const args = parseArgs(argv);
 
   if (args.help) {
-    stdout('Uso: promptcraft-unificando "texto" [--project] [--raw] [--save] [--llm claude|gemini|auto]\n');
+    stdout('Uso: npx @unificando/refina ["texto" | --file <arquivo> | stdin via pipe] [--project] [--raw] [--save] [--llm claude|gemini|auto]\n');
     return 0;
   }
 
@@ -529,11 +529,11 @@ if (require.main === module) {
 
 ```json
 {
-  "name": "promptcraft-unificando",
+  "name": "@unificando/refina",
   "version": "1.0.0",
   "description": "Refina prompts em 1 passo: monta o prompt de engenharia a partir de texto cru e delega a execução a um CLI de LLM local (claude/gemini), com opção --raw para o meta-prompt bruto agnóstico de LLM.",
   "bin": {
-    "promptcraft-unificando": "./bin/cli.js"
+    "unificando-refina": "./bin/cli.js"
   },
   "files": [
     "bin",

@@ -1,4 +1,4 @@
-# Instruções para criação do repositório promptcraft-unificando
+# Instruções para criação do repositório refina
 
 > **ATENÇÃO (v1.0.0):** este documento descreve o scaffold das versões 0.x,
 > onde o CLI só imprimia o meta-prompt cru. Desde a v1.0.0 o repositório
@@ -18,14 +18,14 @@
 ## Objetivo
 
 Criar um novo repositório Node.js, pacote npm publicável via `npx`, com o
-nome `promptcraft-unificando`, seguindo exatamente a estrutura e o código
+nome `@unificando/refina`, seguindo exatamente a estrutura e o código
 abaixo.
 
 ## Passo 0 — pré-checagem
 
 Antes de tudo, rodar:
 ```bash
-npm view promptcraft-unificando
+npm view @unificando/refina
 ```
 Se retornar dados de um pacote existente (não erro 404), PARAR e avisar o
 usuário que o nome está ocupado — não prosseguir com a criação assumindo
@@ -34,7 +34,7 @@ esse nome.
 ## Passo 1 — inicializar repositório
 
 ```bash
-mkdir promptcraft-unificando && cd promptcraft-unificando
+mkdir refina && cd refina
 git init
 npm init -y
 ```
@@ -43,11 +43,11 @@ Ajustar o `package.json` gerado pra conter exatamente:
 
 ```json
 {
-  "name": "promptcraft-unificando",
+  "name": "@unificando/refina",
   "version": "0.1.0",
   "description": "Monta um prompt de engenharia de prompt a partir de texto cru e, opcionalmente, do contexto do projeto atual. Agnóstico de LLM e de stack — funciona via stdout/pipe com qualquer CLI de IA.",
   "bin": {
-    "promptcraft-unificando": "./bin/cli.js"
+    "unificando-refina": "./bin/cli.js"
   },
   "files": [
     "bin",
@@ -155,9 +155,9 @@ Deve conter, no mínimo:
 
 ```bash
 npm link
-promptcraft-unificando "teste de geração"
-promptcraft-unificando --project "teste com projeto"
-echo "resultado de teste" | promptcraft-unificando --save
+unificando-refina "teste de geração"
+unificando-refina --project "teste com projeto"
+echo "resultado de teste" | unificando-refina --save
 ```
 
 Confirmar que os três comandos rodam sem erro e produzem saída esperada
@@ -167,8 +167,8 @@ antes de prosseguir.
 
 ```bash
 git add -A
-git commit -m "chore: initial scaffold do promptcraft-unificando"
-gh repo create promptcraft-unificando --public --source=. --push
+git commit -m "chore: initial scaffold do @unificando/refina"
+gh repo create refina --public --source=. --push
 ```
 
 Publicação no npm (rodar manualmente, exige login prévio com

@@ -1,11 +1,11 @@
-# promptcraft-unificando — Flags e Comandos
+# @unificando/refina — Flags e Comandos
 
 ## Sintaxe geral
 
 ```
-npx promptcraft-unificando [texto] [flags]
-npx promptcraft-unificando --file <arquivo> [flags]
-npx promptcraft-unificando [flags]  # texto lido do stdin quando pipeado (cat |, heredoc, pbpaste)
+npx @unificando/refina [texto] [flags]
+npx @unificando/refina --file <arquivo> [flags]
+npx @unificando/refina [flags]  # texto lido do stdin quando pipeado (cat |, heredoc, pbpaste)
 ```
 
 O texto a ser melhorado pode vir de **uma** destas três fontes: argumento
@@ -36,7 +36,7 @@ pipeado** (stdin não é um terminal). Detalhes e precedência na seção
   via `--llm`/`PROMPTCRAFT_LLM`) e imprime o **resultado final**.
 - **`--raw`:** desliga a execução — imprime ou salva o meta-prompt cru.
   `--raw` + `--llm` → `--llm` é ignorado (não há execução).
-- **`--save` com texto:** `promptcraft-unificando "texto" --save` gera o
+- **`--save` com texto:** `unificando-refina "texto" --save` gera o
   resultado (ou o meta-prompt, se com `--raw`) e grava `.md` direto, sem
   pipe. *Mudança em relação às versões 0.x, onde `--save` e texto eram
   mutuamente exclusivos (o incidente do "arquivo vazio").*
@@ -89,10 +89,10 @@ caracteres especiais, porque **nenhum caractere é interpretado**: o shell
 não interpola `$`, não executa backticks e não quebra em apóstrofos.
 
 ```bash
-npx promptcraft-unificando --file prompt.md            # refina e imprime
-npx promptcraft-unificando --file prompt.md --save      # refina e salva o .md
-npx promptcraft-unificando --file prompt.md --raw       # meta-prompt cru no stdout
-npx promptcraft-unificando --file prompt.md --project   # com exploração da arquitetura
+npx @unificando/refina --file prompt.md            # refina e imprime
+npx @unificando/refina --file prompt.md --save      # refina e salva o .md
+npx @unificando/refina --file prompt.md --raw       # meta-prompt cru no stdout
+npx @unificando/refina --file prompt.md --project   # com exploração da arquitetura
 ```
 
 Regras:
@@ -112,9 +112,9 @@ interpretado"), quando o texto já está em outro lugar ou você prefere não
 criar arquivo:
 
 ```bash
-cat prompt.md | npx promptcraft-unificando            # pipe
-pbpaste | npx promptcraft-unificando                  # clipboard (macOS)
-npx promptcraft-unificando <<'EOF'
+cat prompt.md | npx @unificando/refina            # pipe
+pbpaste | npx @unificando/refina                  # clipboard (macOS)
+npx @unificando/refina <<'EOF'
 seu prompt multilinha
 com ```code``` e $vars sem escape
 EOF
@@ -182,11 +182,11 @@ Se o conteúdo já abrir com H1 (caso do resultado final refinado), o título
 
 Uso:
 ```bash
-npx promptcraft-unificando "texto" --save         # gera e salva
-npx promptcraft-unificando --file prompt.md --save # lê o arquivo, gera e salva
-npx promptcraft-unificando --raw "texto" --save   # meta-prompt cru em .md
-npx promptcraft-unificando --save                 # lê stdin até EOF (legado)
-pbpaste | npx promptcraft-unificando --save       # macOS — legado: salva o clipboard cru
+npx @unificando/refina "texto" --save         # gera e salva
+npx @unificando/refina --file prompt.md --save # lê o arquivo, gera e salva
+npx @unificando/refina --raw "texto" --save   # meta-prompt cru em .md
+npx @unificando/refina --save                 # lê stdin até EOF (legado)
+pbpaste | npx @unificando/refina --save       # macOS — legado: salva o clipboard cru
 ```
 
 ### `--title`
@@ -195,7 +195,7 @@ Override manual do título, pra quando a heurística de "primeira linha" não
 produzir um nome de arquivo bom o suficiente.
 
 ```bash
-npx promptcraft-unificando "texto" --save --title "Prompt de resumo de reunião"
+npx @unificando/refina "texto" --save --title "Prompt de resumo de reunião"
 ```
 
 ## Variáveis de ambiente

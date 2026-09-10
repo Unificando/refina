@@ -1,4 +1,8 @@
-# promptcraft-unificando
+# @unificando/refina
+
+[![npm version](https://img.shields.io/npm/v/@unificando/refina.svg)](https://www.npmjs.com/package/@unificando/refina)
+[![license](https://img.shields.io/npm/l/@unificando/refina.svg)](./LICENSE)
+[![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-%40unificando%2Frefina-2b3137?logo=github)](https://github.com/Unificando/refina/pkgs/npm/refina)
 
 CLI instalável via `npx` que **refina prompts em 1 passo**: monta o prompt de "Engenheiro de Prompt" a partir do texto cru que você digita e delega a execução a um CLI de LLM local (`claude` ou `gemini`), devolvendo o **prompt final já refinado**. Sem API key e sem chamada de rede vinda do próprio pacote — a execução acontece no seu computador, via processo local.
 
@@ -17,15 +21,33 @@ CLI instalável via `npx` que **refina prompts em 1 passo**: monta o prompt de "
 Não é necessário instalar — basta usar via `npx`:
 
 ```bash
-npx promptcraft-unificando "sua ideia de prompt"
+npx @unificando/refina "sua ideia de prompt"
 ```
+
+Instalação global opcional expõe o comando `unificando-refina`:
+
+```bash
+npm install -g @unificando/refina
+unificando-refina "sua ideia de prompt"
+```
+
+### Instalar pelo GitHub Packages
+
+O pacote também é publicado no [GitHub Packages da organização](https://github.com/Unificando/refina/pkgs/npm/refina), com o mesmo nome `@unificando/refina`, conteúdo e versão. Para puxá-lo de lá em vez do npmjs.com, autentique o registry do GitHub num `.npmrc` (na home ou no projeto):
+
+```
+@unificando:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=SEU_GITHUB_TOKEN
+```
+
+O token precisa do escopo `read:packages`. Para uso rápido sem autenticar, prefira o `npx @unificando/refina` do npmjs.com acima.
 
 ## Uso
 
 ### 1. Resultado final em 1 passo (padrão)
 
 ```bash
-npx promptcraft-unificando "quero um prompt pra gerar resumo de reunião"
+npx @unificando/refina "quero um prompt pra gerar resumo de reunião"
 ```
 
 Executa o template no `claude`/`gemini`/`opencode` local e imprime o prompt
@@ -36,7 +58,7 @@ confirmação ("posso executar?") nem solicitar mais informações**.
 ### 2. Com contexto do projeto atual
 
 ```bash
-npx promptcraft-unificando --project "gera os testes unitários dessa função de pagamento"
+npx @unificando/refina --project "gera os testes unitários dessa função de pagamento"
 ```
 
 A execução roda no diretório atual, então o LLM local explora a arquitetura do projeto (estrutura de pastas, `package.json`) antes de refinar o prompt.
@@ -44,7 +66,7 @@ A execução roda no diretório atual, então o LLM local explora a arquitetura 
 ### 3. Gerando e salvando o resultado direto
 
 ```bash
-npx promptcraft-unificando --project "..." --save
+npx @unificando/refina --project "..." --save
 ```
 
 Gera o resultado final e grava direto num `.md` no diretório atual — sem pipe manual.
@@ -52,8 +74,8 @@ Gera o resultado final e grava direto num `.md` no diretório atual — sem pipe
 ### 4. Modo legado: meta-prompt bruto (para pipar em qualquer LLM)
 
 ```bash
-npx promptcraft-unificando --raw "quero um prompt pra gerar resumo de reunião"
-npx promptcraft-unificando --raw "..." | claude
+npx @unificando/refina --raw "quero um prompt pra gerar resumo de reunião"
+npx @unificando/refina --raw "..." | claude
 ```
 
 Com `--raw`, o CLI só imprime o meta-prompt cru (sem executar nada). O fluxo de pipe com qualquer CLI/chat das versões 0.x continua funcionando.
@@ -61,7 +83,7 @@ Com `--raw`, o CLI só imprime o meta-prompt cru (sem executar nada). O fluxo de
 ### 5. Salvando o resultado de qualquer LLM (legado stdin)
 
 ```bash
-npx promptcraft-unificando --save
+npx @unificando/refina --save
 # cola o texto que o LLM de destino gerou, Ctrl+D pra confirmar
 ```
 
@@ -77,13 +99,13 @@ casos use uma fonte que o shell não interpreta:
 
 ```bash
 # De um arquivo (recomendado para prompts longos)
-npx promptcraft-unificando --file prompt.md --project --save
+npx @unificando/refina --file prompt.md --project --save
 
 # Pipe de um arquivo (stdin não é um terminal → vira o texto)
-cat prompt.md | npx promptcraft-unificando
+cat prompt.md | npx @unificando/refina
 
 # Heredoc (multilinha literal, sem escape de $ ou backticks)
-npx promptcraft-unificando --project <<'EOF'
+npx @unificando/refina --project <<'EOF'
 escreva um prompt para auditar meu repositório:
 1. varredura de secrets
 2. teste de autenticação
@@ -93,7 +115,7 @@ blocos de código com backticks funcionam sem escape
 EOF
 
 # Clipboard (macOS)
-pbpaste | npx promptcraft-unificando
+pbpaste | npx @unificando/refina
 ```
 
 Regras rápidas: texto posicional **ou** `--file`, não ambos; sem texto nem

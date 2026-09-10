@@ -1,4 +1,4 @@
-# promptcraft-unificando — Visão Geral
+# @unificando/refina — Visão Geral
 
 ## O que é
 
@@ -41,7 +41,7 @@ modo `--raw` preserva o fluxo manual/pipe para quem quiser usar outra IA
 ### 1. Resultado final em 1 passo (padrão)
 
 ```bash
-npx promptcraft-unificando "quero um prompt pra gerar resumo de reunião"
+npx @unificando/refina "quero um prompt pra gerar resumo de reunião"
 ```
 Detecta o CLI local (`claude` → `gemini` → `opencode`, em ordem), executa o
 template e imprime o prompt final refinado. No modo direto o template leva o
@@ -53,7 +53,7 @@ o resultado").
 ### 2. Prompt que precisa de contexto do projeto atual
 
 ```bash
-npx promptcraft-unificando --project "gera os testes unitários dessa função de pagamento"
+npx @unificando/refina --project "gera os testes unitários dessa função de pagamento"
 ```
 A execução roda com cwd = diretório atual; o LLM local explora a arquitetura
 (estrutura de pastas, `package.json`) antes de gerar o prompt (ver
@@ -62,14 +62,14 @@ documento 02, seção da flag `--project`).
 ### 3. Gerando e salvando direto
 
 ```bash
-npx promptcraft-unificando --project "..." --save
+npx @unificando/refina --project "..." --save
 ```
 Gera o resultado final e grava `.md` no diretório atual, sem pipe manual.
 
 ### 4. Meta-prompt bruto (modo `--raw`)
 
 ```bash
-npx promptcraft-unificando --raw "quero um prompt pra gerar resumo de reunião"
+npx @unificando/refina --raw "quero um prompt pra gerar resumo de reunião"
 ```
 Imprime o meta-prompt cru; pipe para `claude`/`gemini`/qualquer chat (ver
 documento 03).
@@ -77,7 +77,7 @@ documento 03).
 ### 5. Salvando o resultado de qualquer LLM (legado stdin)
 
 ```bash
-npx promptcraft-unificando --save
+npx @unificando/refina --save
 # cola o texto que o LLM de destino gerou, Ctrl+D pra confirmar
 ```
 Persiste o resultado como `.md` no diretório atual. Sem chamada de API —
@@ -91,12 +91,12 @@ em `someone's`. Para esses prompts, entregue o texto por uma fonte que o
 shell não interpreta:
 
 ```bash
-npx promptcraft-unificando --file prompt.md            # de um arquivo
-cat prompt.md | npx promptcraft-unificando             # pipe (stdin não-TTY)
-npx promptcraft-unificando <<'EOF'                      # heredoc literal
+npx @unificando/refina --file prompt.md            # de um arquivo
+cat prompt.md | npx @unificando/refina             # pipe (stdin não-TTY)
+npx @unificando/refina <<'EOF'                      # heredoc literal
 ...seu prompt multilinha com ```code``` e $vars sem escape...
 EOF
-pbpaste | npx promptcraft-unificando                   # clipboard (macOS)
+pbpaste | npx @unificando/refina                   # clipboard (macOS)
 ```
 
 O texto vai íntegro (com quebras de linha e caracteres especiais) dentro

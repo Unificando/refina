@@ -1,4 +1,4 @@
-# promptcraft-unificando — Compatibilidade com CLIs de LLM
+# @unificando/refina — Compatibilidade com CLIs de LLM
 
 O pacote tem dois modos: **execução automática** (padrão, v1.0.0), que
 chama o CLI de LLM local de forma headless; e o **modo `--raw`** (legado),
@@ -37,9 +37,9 @@ Premissas:
 ### Exemplos
 
 ```bash
-npx promptcraft-unificando "ideia crua"
-npx promptcraft-unificando --project "ideia que depende do repo atual"
-npx promptcraft-unificando --llm gemini "ideia crua"
+npx @unificando/refina "ideia crua"
+npx @unificando/refina --project "ideia que depende do repo atual"
+npx @unificando/refina --llm gemini "ideia crua"
 ```
 
 > Se alguma versão do `gemini -p` rejeitar o prompt vazio (`-p ""`), o
@@ -63,21 +63,21 @@ pipe/stdin. Esta tabela documenta o que foi validado.
 
 ### Claude Code
 ```bash
-npx promptcraft-unificando --raw "ideia crua" | claude
+npx @unificando/refina --raw "ideia crua" | claude
 ```
 
 ### Gemini CLI
 ```bash
-npx promptcraft-unificando --raw "ideia crua" | gemini
+npx @unificando/refina --raw "ideia crua" | gemini
 ```
 ou, equivalente:
 ```bash
-gemini -p "$(npx promptcraft-unificando --raw 'ideia crua')"
+gemini -p "$(npx @unificando/refina --raw 'ideia crua')"
 ```
 
 ### Fallback universal (qualquer CLI ou chat web)
 ```bash
-npx promptcraft-unificando --raw "ideia crua"
+npx @unificando/refina --raw "ideia crua"
 ```
 Sem pipe nenhum — só imprime o template no terminal. Copia manualmente e
 cola onde quiser (chat web, outra CLI, editor).

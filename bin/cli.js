@@ -34,7 +34,7 @@ async function main(argv, deps = {}) {
   const args = parseArgs(argv);
 
   if (args.help) {
-    stdout('Uso: promptcraft-unificando ["texto" | --file <arquivo> | stdin via pipe] [--project] [--raw] [--save] [--llm claude|gemini|auto]\n');
+    stdout('Uso: npx @unificando/refina ["texto" | --file <arquivo> | stdin via pipe] [--project] [--raw] [--save] [--llm claude|gemini|auto]\n');
     return 0;
   }
 
