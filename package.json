@@ -1,6 +1,6 @@
 {
   "name": "@unificando/refina",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Refina prompts em 1 passo: monta o prompt de engenharia a partir de texto cru e delega a execução a um CLI de LLM local (claude/gemini), com opção --raw para o meta-prompt bruto agnóstico de LLM.",
   "bin": {
     "unificando-refina": "bin/cli.js"
